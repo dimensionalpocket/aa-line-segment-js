@@ -3,13 +3,13 @@
 'use strict'
 
 // Data indexes
-export const POSITION_BASE = 0
-export const A_BASE = 1
-export const B_BASE = 2
+export const POSITION_LOCAL = 0
+export const A_LOCAL = 1
+export const B_LOCAL = 2
 export const POSITION_GLOBAL = 3
 export const A_GLOBAL = 4
 export const B_GLOBAL = 5
-export const FLIP_MODIFIER_BASE = 6
+export const FLIP_MODIFIER_LOCAL = 6
 export const FLIP_MODIFIER_GLOBAL = 7
 
 export class AALineSegment {
@@ -21,7 +21,7 @@ export class AALineSegment {
     var data = new Float64Array(8)
 
     // Default flip modifiers.
-    data[FLIP_MODIFIER_BASE] = 1
+    data[FLIP_MODIFIER_LOCAL] = 1
     data[FLIP_MODIFIER_GLOBAL] = 1
 
     /**
@@ -65,13 +65,18 @@ export class AALineSegment {
    */
   set a (value) {
     var data = this.data
-    var oldA = data[A_BASE]
+    var oldA = data[A_LOCAL]
     var delta = value - oldA
 
     if (delta === 0) return
 
-    data[A_BASE] = value
-    data[A_GLOBAL] = data[A_GLOBAL] + delta
+    data[A_LOCAL] = value
+
+    if (this.flipped()) {
+      data[B_GLOBAL] = data[B_GLOBAL] - delta
+    } else {
+      data[A_GLOBAL] = data[A_GLOBAL] + delta
+    }
   }
 
   /**
@@ -79,12 +84,12 @@ export class AALineSegment {
    */
   set b (value) {
     var data = this.data
-    var oldB = data[B_BASE]
+    var oldB = data[B_LOCAL]
     var delta = value - oldB
 
     if (delta === 0) return
 
-    data[B_BASE] = value
+    data[B_LOCAL] = value
     data[B_GLOBAL] = data[B_GLOBAL] + delta
   }
 
@@ -93,12 +98,12 @@ export class AALineSegment {
    */
   set position (value) {
     var data = this.data
-    var oldPos = data[POSITION_BASE]
+    var oldPos = data[POSITION_LOCAL]
     var delta = value - oldPos
 
     if (delta === 0) return
 
-    data[POSITION_BASE] = value
+    data[POSITION_LOCAL] = value
 
     this.update(delta)
   }
@@ -107,31 +112,41 @@ export class AALineSegment {
    * @param {?AALineSegment} p
    */
   set parent (p) {
-    // TODO this method is not finished
-    var oldParent = this._parent
-
-    this._parent = p
-
     var data = this.data
-
     var positionDelta
 
     if (p == null) {
-      data[A_GLOBAL] = data[A_BASE]
-      data[B_GLOBAL] = data[B_BASE]
-      data[FLIP_MODIFIER_GLOBAL] = data[FLIP_MODIFIER_BASE]
-      positionDelta = data[POSITION_BASE] - data[POSITION_GLOBAL]
-    } else {
-      p.children.push(this)
-      positionDelta = this.data[POSITION_GLOBAL]
+      // Removing the parent resets globals to their base values.
+      // Using delta update on position so children can be updated as well.
+      data[A_GLOBAL] = data[A_LOCAL]
+      data[B_GLOBAL] = data[B_LOCAL]
+
+      data[FLIP_MODIFIER_GLOBAL] = data[FLIP_MODIFIER_LOCAL]
+      positionDelta = -data[POSITION_GLOBAL]
+      this.update(positionDelta)
+      // return
     }
 
-    this.update(positionDelta)
+    // TODO this method is not finished
+    // var oldParent = this._parent
 
-    // var parentData = this.data
-    // var childData = child.data
+    // this._parent = p
+
+    //
+
+    // p.children.push(this)
+    // positionDelta = this.data[POSITION_GLOBAL]
+
+    // this.update(positionDelta)
+
+    // // var parentData = this.data
+    // // var childData = child.data
 
     // childData[POSITION_GLOBAL] += parentData[POSITION_GLOBAL]
+  }
+
+  get parent () {
+    return this._parent
   }
 
   /**
@@ -151,19 +166,25 @@ export class AALineSegment {
     var data = this.data
 
     var newMod = flipped ? -1 : 1
-    var oldMod = data[FLIP_MODIFIER_BASE]
+    var oldMod = data[FLIP_MODIFIER_LOCAL]
 
     if ((newMod > 0 && oldMod > 0) || (newMod < 0 && oldMod < 0)) return // no change
 
-    data[FLIP_MODIFIER_BASE] = newMod
-    data[FLIP_MODIFIER_GLOBAL] *= newMod
+    data[FLIP_MODIFIER_LOCAL] = newMod
+    data[FLIP_MODIFIER_GLOBAL] *= -1
 
     // TODO
   }
 
   /**
+   * @returns {boolean} `true` if segment is flipped globally.
+   */
+  flipped () {
+    return this.data[FLIP_MODIFIER_GLOBAL] < 0
+  }
+
+  /**
    * Updates globals based on incremental changes in position.
-   * Position can be indirectly changed by parent changes and flipping.
    *
    * @param {number} positionDelta - Position change value.
    */

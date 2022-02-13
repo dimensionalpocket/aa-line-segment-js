@@ -2,11 +2,11 @@
 
 [![build](https://github.com/dimensionalpocket/aa-line-segment-js/actions/workflows/node.js.yml/badge.svg)](https://github.com/dimensionalpocket/aa-line-segment-js/actions/workflows/node.js.yml) [![Total alerts](https://img.shields.io/lgtm/alerts/g/dimensionalpocket/aa-line-segment-js.svg)](https://lgtm.com/projects/g/dimensionalpocket/aa-line-segment-js/alerts/) [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/dimensionalpocket/aa-line-segment-js.svg)](https://lgtm.com/projects/g/dimensionalpocket/aa-line-segment-js/context:javascript)
 
-A Node library for line segment operations. Features include:
+A Node library for line segment manipulations. Features include:
 
 * positioning,
 * nesting (add segments inside segments),
-* flipping around its pivot,
+* flipping around its position,
 * global positioning, and
 * collision detection.
 
@@ -30,7 +30,7 @@ segment.a // <= -15
 segment.b // <= -9
 segment.flip(false) // unflip
 
-var child = new AALineSegument(1, 2)
+var child = new AALineSegment(1, 2)
 child.a // <= 1
 child.b // <= 2
 
@@ -46,3 +46,7 @@ Calling `segment.flip(true)` will flip a segment (and all its children) around i
 ![Flipping](https://raw.githubusercontent.com/dimensionalpocket/docs/main/draw.io/aa-line-segment.png)
 
 Call `segment.flip(false)` to unflip.
+
+## License
+
+MIT

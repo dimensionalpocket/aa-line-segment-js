@@ -16,36 +16,148 @@ It is tailored for usage in games that require a box management system, for hand
 
 ```js
 var segment = new AALineSegment(-1, 5)
+
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                         A──P──────────────B 
+                            ↑
+                            Position starts at 0
+*/
+
 segment.a // <= -1
 segment.b // <= 5
-
-segment.length // <= 6
-
-segment.position = 10 // move the segment along the axis
-segment.a // <= 9
-segment.b // <= 15
-
-segment.flip(true) // flip the segment around its position
-segment.a // <= -15
-segment.b // <= -9
-segment.flip(false) // unflip
-
-var child = new AALineSegment(1, 2)
-child.a // <= 1
-child.b // <= 2
-
-segment.add(child)
-child.a // <= 11 - global position changed by parent's position (10)
-child.b // <= 12
 ```
 
-## Flipping
+### Positioning
 
-Calling `segment.flip(true)` will flip a segment (and all its children) around its position:
+The segment can be moved along the axis:
 
-![Flipping](https://raw.githubusercontent.com/dimensionalpocket/docs/main/draw.io/aa-line-segment.png)
+```js
+segment.position = 2
 
-Call `segment.flip(false)` to unflip.
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                               A──P──────────────B
+                                  ↑
+                                  New position
+*/
+
+segment.a // <= 1
+segment.b // <= 7
+```
+
+### Flipping
+
+Segments can be flipped around their positions:
+
+```js
+segment.flip(true)
+
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                   A──────────────P──B
+*/
+
+segment.a // <= -3
+segment.b // <= 3
+
+segment.flip(false) // unflip
+```
+
+### Nested Segments
+
+Segments can be added to other segments, inheriting their positions and flip states.
+
+```js
+var child = new AALineSegment(1, 2)
+
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                               A──P──────────────B
+
+                            P  A──B
+                            ↑
+                            Child without parent, position 0
+                            
+*/
+
+child.a // <= 1
+child.b // <= 2
+```
+
+```js
+segment.add(child)
+
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9 
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤ 
+                               A──P──────────────B       
+                                  P  A──B
+                                  ↑
+                                  Child with parent, inherits position
+*/
+
+child.a // <= 3
+child.b // <= 4
+```
+
+```js
+child.flip(true)
+
+/*
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                               A──P──────────────B
+                            A──B  P
+                                  ↑
+                                  Flipped child
+*/
+
+child.a // <= 0
+child.b // <= 1
+
+child.flip(false) // unflip
+```
+
+Flipping the parent also flips its children:
+
+```js
+segment.flip(true)
+
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                   A──────────────P──B
+                            A──B  P
+*/
+
+child.a // <= 0
+child.b // <= 1
+```
+
+If any child is already flipped, their global flip state is toggled:
+
+```js
+child.flip(true)
+
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                   A──────────────P──B
+                                  P  A──B
+                                  ↑
+                                  Child is flipped,
+                                  but appears unflipped
+                                  because parent is flipped
+*/
+
+child.a // <= 3
+child.b // <= 4
+```
 
 ## License
 

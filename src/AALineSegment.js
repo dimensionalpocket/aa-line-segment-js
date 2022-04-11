@@ -1,5 +1,3 @@
-// @ts-check
-
 'use strict'
 
 // Data indexes
@@ -46,6 +44,7 @@ export class AALineSegment {
 
   /**
    * Returns the global position of the start point.
+   *
    * @returns {number}
    */
   get a () {
@@ -54,6 +53,7 @@ export class AALineSegment {
 
   /**
    * Returns the global position of the end point.
+   *
    * @returns {number}
    */
   get b () {
@@ -61,36 +61,47 @@ export class AALineSegment {
   }
 
   /**
+   * Sets local A.
+   * Updates global A (unflipped) or B (flipped).
+   *
    * @param {number} value
    */
   set a (value) {
     var data = this.data
-    var oldA = data[A_LOCAL]
-    var delta = value - oldA
+    var current = data[A_LOCAL]
+    var delta = value - current
 
     if (delta === 0) return
 
     data[A_LOCAL] = value
 
     if (this.flipped()) {
-      data[B_GLOBAL] = data[B_GLOBAL] - delta
+      data[B_GLOBAL] -= delta
     } else {
-      data[A_GLOBAL] = data[A_GLOBAL] + delta
+      data[A_GLOBAL] += delta
     }
   }
 
   /**
+   * Sets local B.
+   * Updates global B (unflipped) or A (flipped) based on delta.
+   *
    * @param {number} value
    */
   set b (value) {
     var data = this.data
-    var oldB = data[B_LOCAL]
-    var delta = value - oldB
+    var current = data[B_LOCAL]
+    var delta = value - current
 
     if (delta === 0) return
 
     data[B_LOCAL] = value
-    data[B_GLOBAL] = data[B_GLOBAL] + delta
+
+    if (this.flipped()) {
+      data[A_GLOBAL] -= delta
+    } else {
+      data[B_GLOBAL] += delta
+    }
   }
 
   /**
@@ -105,17 +116,17 @@ export class AALineSegment {
 
     data[POSITION_LOCAL] = value
 
-    this.update(delta)
+    this.updateGlobalPosition(delta)
   }
 
   /**
-   * @param {?AALineSegment} p
+   * @param {?AALineSegment} newParent
    */
-  set parent (p) {
+  set parent (newParent) {
     var data = this.data
     var positionDelta
 
-    if (p == null) {
+    if (newParent == null) {
       // Removing the parent resets globals to their base values.
       // Using delta update on position so children can be updated as well.
       data[A_GLOBAL] = data[A_LOCAL]
@@ -123,26 +134,18 @@ export class AALineSegment {
 
       data[FLIP_MODIFIER_GLOBAL] = data[FLIP_MODIFIER_LOCAL]
       positionDelta = -data[POSITION_GLOBAL]
-      this.update(positionDelta)
-      // return
+      this.updateGlobalPosition(positionDelta)
+      return
     }
 
-    // TODO this method is not finished
-    // var oldParent = this._parent
+    var oldParent = this._parent
+    if (oldParent) {
+      positionDelta = newParent.data[POSITION_GLOBAL] - oldParent.data[POSITION_GLOBAL]
+    } else {
+      positionDelta = newParent.data[POSITION_GLOBAL]
+    }
 
-    // this._parent = p
-
-    //
-
-    // p.children.push(this)
-    // positionDelta = this.data[POSITION_GLOBAL]
-
-    // this.update(positionDelta)
-
-    // // var parentData = this.data
-    // // var childData = child.data
-
-    // childData[POSITION_GLOBAL] += parentData[POSITION_GLOBAL]
+    this.updateGlobalPosition(positionDelta)
   }
 
   get parent () {
@@ -171,40 +174,97 @@ export class AALineSegment {
     if ((newMod > 0 && oldMod > 0) || (newMod < 0 && oldMod < 0)) return // no change
 
     data[FLIP_MODIFIER_LOCAL] = newMod
+
+    // If local mod changed, global mod will always toggle
     data[FLIP_MODIFIER_GLOBAL] *= -1
+
+    if (this.flipped()) {
+      this.onFlip()
+    } else {
+      this.onUnflip()
+    }
+  }
+
+  /**
+   * Called after the segment is flipped globally.
+   */
+  onFlip () {
+    var data = this.data
+
+    // Flips A and B globals around its position
+    var position = data[POSITION_GLOBAL]
+
+    // var pA = data[A_GLOBAL] - position
+    // var pB = data[B_GLOBAL] - position
+
+    data[A_GLOBAL] = position - data[B_LOCAL]
+    data[B_GLOBAL] = position - data[A_LOCAL]
+
+    // data[POSITION_GLOBAL] += data[POSITION_LOCAL] * 2
+
+    // this.flipAB()
+
+    // /** @type {Array<AALineSegment>} */
+    // var children = this.children
+
+    // /** @type {AALineSegment} */
+    // var child
+
+    // // Flips all children
+    // for (child of children) {
+    //   child.data[FLIP_MODIFIER_GLOBAL] *= -1
+    // }
+
+    // // Determines the position delta caused by flipping.
+    // // This *only* affects children!
+    // var position = data[POSITION_GLOBAL]
+    // var positionDelta
+    // for (child of children) {
+    //   // We calculate the position difference between the parent and child
+    //   // then multiply by 2 as we have to send the child "across" the position
+    //   positionDelta = -(child.data[POSITION_GLOBAL] - position) * 2
+    //   child.updateGlobalPosition(positionDelta)
+    // }
+  }
+
+  onUnflip () {
+    var data = this.data
+
+    // Restores A and B globals
+    var position = data[POSITION_GLOBAL]
+
+    data[A_GLOBAL] = position + data[A_LOCAL]
+    data[B_GLOBAL] = position + data[B_LOCAL]
 
     // TODO
   }
 
   /**
-   * @returns {boolean} `true` if segment is flipped globally.
+   * `true` if segment is flipped globally.
+   *
+   * @returns {boolean}
    */
   flipped () {
     return this.data[FLIP_MODIFIER_GLOBAL] < 0
   }
 
   /**
-   * Updates globals based on incremental changes in position.
-   *
-   * @param {number} positionDelta - Position change value.
+   * @param {number} delta - Position change difference.
    */
-  update (positionDelta) {
-    if (positionDelta === 0) return
+  updateGlobalPosition (delta) {
+    if (delta === 0) return
 
     var data = this.data
 
-    data[POSITION_GLOBAL] = data[POSITION_GLOBAL] + positionDelta
-    data[A_GLOBAL] = data[A_GLOBAL] + positionDelta
-    data[B_GLOBAL] = data[B_GLOBAL] + positionDelta
-
-    this.updateChildren(positionDelta)
-  }
-
-  /**
-   * @param {number} positionDelta - Position change
-   */
-  updateChildren (positionDelta) {
-    if (positionDelta === 0) return
+    if (this.flipped()) {
+      data[POSITION_GLOBAL] -= delta
+      data[A_GLOBAL] -= delta
+      data[B_GLOBAL] -= delta
+    } else {
+      data[POSITION_GLOBAL] += delta
+      data[A_GLOBAL] += delta
+      data[B_GLOBAL] += delta
+    }
 
     /** @type {Array<AALineSegment>} */
     var children = this.children
@@ -215,7 +275,7 @@ export class AALineSegment {
     var child
 
     for (child of children) {
-      child.update(positionDelta)
+      child.updateGlobalPosition(delta)
     }
   }
 }

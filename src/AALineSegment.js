@@ -167,42 +167,45 @@ export class AALineSegment {
   }
 
   /**
-   * Set the segment's parent.
+   * Set the segment's parent. If given `null`, removes the parent.
    *
    * @param {?AALineSegment} newParent
    */
   set parent (newParent) {
-    var oldParent = this._parent
-    if (oldParent) {
-      var children = oldParent._children
-      children.splice(children.indexOf(this), 1)
-    }
-
     var positionDelta
 
     if (newParent == null) {
+      var oldParent = this._parent
+
+      // Setting a null parent on a child without a parent
+      // does not have any effect
+      if (!oldParent) return
+
+      // Remove this segment from the old parent's children
+      var children = oldParent._children
+      children.splice(children.indexOf(this), 1)
+
       this._parent = null
 
-      // Removing the parent resets globals to their base values.
+      // Removing the parent resets globals to their local values.
       // Using delta update on position so children can be updated as well.
       this._worldA = this._localA
       this._worldB = this._localB
       this._worldFlipped = this._localFlipped
 
-      positionDelta = -this._worldPosition
+      positionDelta = -oldParent._worldPosition
       this.updateGlobalPosition(positionDelta)
 
       return
     }
 
-    if (oldParent) {
-      positionDelta = newParent._worldPosition - oldParent._worldPosition
-    } else {
-      positionDelta = newParent._worldPosition
-    }
+    // Re-call this method with null to remove old parent
+    this.parent = null
 
     this._parent = newParent
     newParent._children.push(this)
+
+    positionDelta = newParent._worldPosition
 
     this.updateGlobalPosition(positionDelta)
   }

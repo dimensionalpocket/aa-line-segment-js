@@ -279,11 +279,11 @@ describe('AALineSegment', function () {
             // console.log(this.segment)
           })
 
-          it.skip('updates A', function () {
+          it('updates A', function () {
             expect(this.segment.a).to.eq(-5)
           })
 
-          it.skip('updates B', function () {
+          it('updates B', function () {
             expect(this.segment.b).to.eq(1)
           })
         })

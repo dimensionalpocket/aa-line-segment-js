@@ -67,16 +67,20 @@ describe('AALineSegment', function () {
           expect(this.parent._children).to.contain(this.child)
         })
 
-        it.skip('updates the global A on the child', function () {
+        it('updates the global A on the child', function () {
           expect(this.child.a).to.eq(-1)
         })
 
-        it.skip('updates the global B on the child', function () {
+        it('updates the global B on the child', function () {
           expect(this.child.b).to.eq(0)
         })
 
-        it.skip('updates the global position on the child', function () {
+        it('updates the global position on the child', function () {
           expect(this.child.position).to.eq(3)
+        })
+
+        it('keeps the flip state on the child', function () {
+          expect(this.child._globalFlipped).to.eq(true)
         })
       })
 
@@ -240,15 +244,15 @@ describe('AALineSegment', function () {
           expect(this.parent._children).to.not.contain(this.child)
         })
 
-        it.skip('restores global A', function () {
+        it('restores global A', function () {
           expect(this.child.a).to.eq(-2)
         })
 
-        it.skip('restores global B', function () {
+        it('restores global B', function () {
           expect(this.child.b).to.eq(-1)
         })
 
-        it.skip('restores global position', function () {
+        it('restores global position', function () {
           expect(this.child.position).to.eq(2)
         })
 

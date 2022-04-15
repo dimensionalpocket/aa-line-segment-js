@@ -109,11 +109,7 @@ export class AALineSegment {
 
     this._localA = value
 
-    if (this._globalFlipped) {
-      this._globalB -= delta
-    } else {
-      this._globalA += delta
-    }
+    this._recalculateGlobalA()
   }
 
   /**
@@ -130,11 +126,7 @@ export class AALineSegment {
 
     this._localB = value
 
-    if (this._globalFlipped) {
-      this._globalA -= delta
-    } else {
-      this._globalB += delta
-    }
+    this._recalculateGlobalB()
   }
 
   /**
@@ -159,7 +151,7 @@ export class AALineSegment {
 
     this._localPosition = value
 
-    this.updateGlobalPosition(delta)
+    this._recalculateGlobalPositions()
   }
 
   get parent () {
@@ -172,7 +164,6 @@ export class AALineSegment {
    * @param {?AALineSegment} newParent
    */
   set parent (newParent) {
-    var positionDelta
     var oldParent = this._parent
 
     if (newParent == null) {
@@ -189,15 +180,10 @@ export class AALineSegment {
       // Removing the parent resets flip state.
       if (this._globalFlipped !== this._localFlipped) {
         this._globalFlipped = this._localFlipped
-        if (this._globalFlipped) {
-          this._onFlip()
-        } else {
-          this._onUnflip()
-        }
+        this._onGlobalFlipChange()
+      } else {
+        this._recalculateGlobalPositions()
       }
-
-      positionDelta = -oldParent._globalPosition
-      this.updateGlobalPosition(positionDelta)
 
       return
     }
@@ -209,25 +195,12 @@ export class AALineSegment {
     this._parent = newParent
     newParent._children.push(this)
 
-    // Segment will be translated by this amount.
-    // This value may change based on the flip state of the parent.
-    positionDelta = newParent._localPosition
-
     // Flip or unflip segment if orientation changed due to the new parent.
-    if (newParent._globalFlipped !== this._globalFlipped) {
+    if (newParent._globalFlipped) {
       this._globalFlipped = !this._globalFlipped
-      positionDelta += this._localPosition
-      if (this._globalFlipped) {
-        positionDelta *= -1 // translate to the left
-        this.updateGlobalPosition(positionDelta)
-        this._onFlip()
-      } else {
-        this.updateGlobalPosition(positionDelta)
-        this._onUnflip()
-      }
-      // console.log('parentFlip', this)
+      this._onGlobalFlipChange()
     } else {
-      this.updateGlobalPosition(positionDelta)
+      this._recalculateGlobalPositions()
     }
   }
 
@@ -252,9 +225,78 @@ export class AALineSegment {
 
     this._localFlipped = newState
 
-    // If local mod changed, global mod will always toggle
+    // If local state changed, global state will always toggle.
     this._globalFlipped = !this._globalFlipped
 
+    this._onGlobalFlipChange()
+  }
+
+  /**
+   * Recalculates global A based on the global position.
+   *
+   * @private
+   */
+  _recalculateGlobalA () {
+    if (this._globalFlipped) {
+      this._globalB = this._globalPosition - this._localA
+    } else {
+      this._globalA = this._globalPosition + this._localA
+    }
+  }
+
+  /**
+   * Recalculates global B based on the global position.
+   *
+   * @private
+   */
+  _recalculateGlobalB () {
+    if (this._globalFlipped) {
+      this._globalA = this._globalPosition - this._localB
+    } else {
+      this._globalB = this._globalPosition + this._localB
+    }
+  }
+
+  /**
+   * Recalculates global position of self and all children.
+   *
+   * @private
+   */
+  _recalculateGlobalPositions () {
+    this._recalculateGlobalPosition()
+
+    for (var child of this._children) {
+      child._recalculateGlobalPositions()
+    }
+  }
+
+  /**
+   * Recalculates global position.
+   *
+   * @private
+   */
+  _recalculateGlobalPosition () {
+    var parent = this.parent
+    var parentGlobalPosition = 0
+
+    if (parent) {
+      parentGlobalPosition = parent._globalPosition
+    }
+
+    var globalPosition = parentGlobalPosition
+    if (parent?._globalFlipped) {
+      globalPosition -= this._localPosition
+    } else {
+      globalPosition += this._localPosition
+    }
+
+    this._globalPosition = globalPosition
+
+    this._recalculateGlobalA()
+    this._recalculateGlobalB()
+  }
+
+  _onGlobalFlipChange () {
     if (this._globalFlipped) {
       this._onFlip()
     } else {
@@ -264,39 +306,26 @@ export class AALineSegment {
 
   /**
    * Called after the segment is flipped globally.
-   * Do not call this method directly!
    *
    * @private
    */
   _onFlip () {
-    // Flips A and B globals around its position
-    var globalPosition = this._globalPosition
-
-    this._globalA = globalPosition - this._localB
-    this._globalB = globalPosition - this._localA
-
+    this._recalculateGlobalPosition()
     this._flipChildren()
   }
 
   /**
    * Called after the segment is unflipped globally.
-   * Do not call this method directly!
    *
    * @private
    */
   _onUnflip () {
-    // Restores A and B globals
-    var globalPosition = this._globalPosition
-
-    this._globalA = globalPosition + this._localA
-    this._globalB = globalPosition + this._localB
-
+    this._recalculateGlobalPosition()
     this._flipChildren()
   }
 
   /**
    * Called after the segment flip state changes.
-   * Do not call this method directly!
    *
    * @private
    */
@@ -310,59 +339,12 @@ export class AALineSegment {
     // Toggles flipping on all children
     for (child of children) {
       child._globalFlipped = !child._globalFlipped
-    }
 
-    // Determines the new positions caused by flipping.
-    // This *only* affects children!
-    var positionDelta, parent, parentPosition
-    for (child of children) {
-      parent = child._parent
-      // @ts-ignore - parent is never null in this case
-      parentPosition = parent._globalPosition
-
-      // We calculate the position difference between the parent and child
-      // then multiply by 2 as we have to send the child "across" the position
-      // @ts-ignore - parent is never null in this case
-      if (parent._globalFlipped) {
-        positionDelta = -(child._globalPosition - parentPosition) * 2
+      if (child._globalFlipped) {
+        child._onFlip()
       } else {
-        positionDelta = (child._globalPosition - parentPosition) * 2
+        child._onUnflip()
       }
-
-      // console.log('Moving child by', positionDelta, child)
-      child.updateGlobalPosition(positionDelta)
-    }
-  }
-
-  /**
-   * @param {number} delta - Position change difference.
-   */
-  updateGlobalPosition (delta) {
-    if (delta === 0) return
-
-    var parent = this._parent
-
-    if (parent?._globalFlipped && !this._globalFlipped) {
-      // A flipped parent changes the orientation of a unflipped segment.
-      this._globalPosition -= delta
-      this._globalA -= delta
-      this._globalB -= delta
-    } else {
-      this._globalPosition += delta
-      this._globalA += delta
-      this._globalB += delta
-    }
-
-    /** @type {Array<AALineSegment>} */
-    var children = this._children
-
-    if (children.length === 0) return
-
-    /** @type {AALineSegment} */
-    var child
-
-    for (child of children) {
-      child.updateGlobalPosition(delta)
     }
   }
 }

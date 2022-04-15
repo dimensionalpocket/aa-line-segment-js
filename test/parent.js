@@ -30,15 +30,15 @@ describe('AALineSegment', function () {
           expect(this.parent._children).to.contain(this.child)
         })
 
-        it('updates the global A on the child', function () {
+        it('updates the world A on the child', function () {
           expect(this.child.a).to.eq(6)
         })
 
-        it('updates the global B on the child', function () {
+        it('updates the world B on the child', function () {
           expect(this.child.b).to.eq(7)
         })
 
-        it('updates the global position on the child', function () {
+        it('updates the world position on the child', function () {
           expect(this.child.position).to.eq(3)
         })
       })
@@ -65,15 +65,15 @@ describe('AALineSegment', function () {
           this.child.parent = this.parent
         })
 
-        it('updates the global A on the child', function () {
+        it('updates the world A on the child', function () {
           expect(this.child.a).to.eq(6)
         })
 
-        it('updates the global B on the child', function () {
+        it('updates the world B on the child', function () {
           expect(this.child.b).to.eq(7)
         })
 
-        it('updates the global position on the child', function () {
+        it('updates the world position on the child', function () {
           expect(this.child.position).to.eq(3)
         })
 
@@ -108,9 +108,7 @@ describe('AALineSegment', function () {
           this.parent.flip(true)
           this.child = new AALineSegment(3, 4)
           this.child.position = 2
-          // console.log(this.child)
           this.child.parent = this.parent
-          // console.log(this.child)
         })
 
         it('sets the child parent to the given segment', function () {
@@ -121,19 +119,19 @@ describe('AALineSegment', function () {
           expect(this.parent._children).to.contain(this.child)
         })
 
-        it('updates the global flip state on the child', function () {
+        it('updates the world flip state on the child', function () {
           expect(this.child._worldFlipped).to.eq(true)
         })
 
-        it.skip('updates the global A on the child', function () {
+        it('updates the world A on the child', function () {
           expect(this.child.a).to.eq(-5)
         })
 
-        it.skip('updates the global B on the child', function () {
+        it('updates the world B on the child', function () {
           expect(this.child.b).to.eq(-4)
         })
 
-        it.skip('updates the global position on the child', function () {
+        it('updates the world position on the child', function () {
           expect(this.child.position).to.eq(-1)
         })
       })
@@ -150,15 +148,15 @@ describe('AALineSegment', function () {
           this.child.parent = null
         })
 
-        it('restores global A', function () {
+        it('restores world A', function () {
           expect(this.child.a).to.eq(3 + 2) // a + position
         })
 
-        it('restores global B', function () {
+        it('restores world B', function () {
           expect(this.child.b).to.eq(4 + 2) // b + position
         })
 
-        it('restores global position', function () {
+        it('restores world position', function () {
           expect(this.child.position).to.eq(2)
         })
 

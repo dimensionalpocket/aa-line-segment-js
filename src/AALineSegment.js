@@ -187,11 +187,8 @@ export class AALineSegment {
 
       this._parent = null
 
-      // Removing the parent resets globals to their local values.
-      // Using delta update on position so children can be updated as well.
-      this._worldA = this._localA
-      this._worldB = this._localB
-      this._worldFlipped = this._localFlipped
+      // Removing the parent resets flip state.
+      this.flip(this._localFlipped)
 
       positionDelta = -oldParent._worldPosition
       this.updateGlobalPosition(positionDelta)
@@ -199,15 +196,26 @@ export class AALineSegment {
       return
     }
 
-    // Re-call this method with null to remove old parent
+    // Re-call this method with null to remove old parent, if any.
     this.parent = null
 
     this._parent = newParent
     newParent._children.push(this)
 
+    // Updates position based on new parent.
     positionDelta = newParent._worldPosition
-
     this.updateGlobalPosition(positionDelta)
+
+    // Updates flip state based on the new parent.
+    if (newParent._worldFlipped !== this._worldFlipped) {
+      this._worldFlipped = !this._worldFlipped
+      if (this._worldFlipped) {
+        this._onFlip()
+      } else {
+        this._onUnflip()
+      }
+      // console.log('parentFlip', this)
+    }
   }
 
   /**
@@ -303,7 +311,7 @@ export class AALineSegment {
       if (child._worldFlipped) {
         positionDelta = (child._worldPosition - parentPosition) * 2
       } else {
-        positionDelta = (child._worldPosition + parentPosition) * 2
+        positionDelta = -(child._worldPosition - parentPosition) * 2
       }
       child.updateGlobalPosition(positionDelta)
     }
@@ -317,8 +325,7 @@ export class AALineSegment {
 
     var parent = this._parent
 
-    // World position changes orientation
-    // if the parent is present and flipped.
+    // A flipped parent changes the orientation of the segment.
     if (parent?._worldFlipped) {
       this._worldPosition -= delta
       this._worldA -= delta

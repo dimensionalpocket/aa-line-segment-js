@@ -219,14 +219,16 @@ export class AALineSegment {
       positionDelta += this._localPosition
       if (this._globalFlipped) {
         positionDelta *= -1 // translate to the left
+        this.updateGlobalPosition(positionDelta)
         this._onFlip()
       } else {
+        this.updateGlobalPosition(positionDelta)
         this._onUnflip()
       }
       // console.log('parentFlip', this)
+    } else {
+      this.updateGlobalPosition(positionDelta)
     }
-
-    this.updateGlobalPosition(positionDelta)
   }
 
   /**
@@ -284,10 +286,10 @@ export class AALineSegment {
    */
   _onUnflip () {
     // Restores A and B globals
-    var position = this._globalPosition
+    var globalPosition = this._globalPosition
 
-    this._globalA = position + this._localA
-    this._globalB = position + this._localB
+    this._globalA = globalPosition + this._localA
+    this._globalB = globalPosition + this._localB
 
     this._flipChildren()
   }
@@ -350,12 +352,6 @@ export class AALineSegment {
       this._globalA += delta
       this._globalB += delta
     }
-
-    // if (this._globalFlipped) {
-    // } else {
-    //   this._globalA += delta
-    //   this._globalB += delta
-    // }
 
     /** @type {Array<AALineSegment>} */
     var children = this._children

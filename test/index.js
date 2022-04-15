@@ -1,5 +1,3 @@
-// @ts-check
-
 'use strict'
 
 import { expect } from '@dimensionalpocket/development'

@@ -1,5 +1,3 @@
-// @ts-check
-
 'use strict'
 
 import { expect } from '@dimensionalpocket/development'
@@ -12,8 +10,9 @@ describe('AALineSegment', function () {
         before(function () {
           // -9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
           //  ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
-          //                                P  A──B               (parent)
           //                                   P        A──B      (child before add)
+          //
+          //                                P  A──B               (parent)
           //                                      P        A──B   (child after add)
           this.parent = new AALineSegment(1, 2)
           this.parent.position = 1
@@ -43,17 +42,54 @@ describe('AALineSegment', function () {
         })
       })
 
+      context('when child (flipped) does not have a parent', function () {
+        before(function () {
+          // -9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+          //  ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+          //                                   P        A──B      (child before add)
+          //                       A──B        P                  (flipped child before add)
+          //
+          //                                P  A──B               (parent)
+          //                          A──B        P               (flipped child after add)
+          this.parent = new AALineSegment(1, 2)
+          this.parent.position = 1
+          this.child = new AALineSegment(3, 4)
+          this.child.position = 2
+          this.child.flip(true)
+          this.child.parent = this.parent
+        })
+
+        it('sets the child parent to the given segment', function () {
+          expect(this.child.parent).to.eq(this.parent)
+        })
+
+        it('adds the child to the parent children array', function () {
+          expect(this.parent._children).to.contain(this.child)
+        })
+
+        it.skip('updates the global A on the child', function () {
+          expect(this.child.a).to.eq(-1)
+        })
+
+        it.skip('updates the global B on the child', function () {
+          expect(this.child.b).to.eq(0)
+        })
+
+        it.skip('updates the global position on the child', function () {
+          expect(this.child.position).to.eq(3)
+        })
+      })
+
       context('when child (not flipped) has a parent (not flipped)', function () {
         before(function () {
           // -9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
           //  ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
-          //                                P  A──B               (parent)
-          //
           //                                   P        A──B      (child before add)
           //
           //                    A──B  P                           (parent2)
           //                                P        A──B         (child after add to parent2)
           //
+          //                                P  A──B               (parent)
           //                                      P        A──B   (child after re-add to parent)
           this.parent = new AALineSegment(1, 2)
           this.parent.position = 1
@@ -138,8 +174,14 @@ describe('AALineSegment', function () {
     })
 
     context('when null', function () {
-      context('when child has a parent', function () {
+      context('when child (not flipped) has a parent (not flipped)', function () {
         before(function () {
+          // -9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+          //  ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+          //                                P  A──B               (parent)
+          //                                      P        A──B   (child under parent)
+          //
+          //                                   P        A──B      (child without parent)
           this.parent = new AALineSegment(1, 2)
           this.parent.position = 1
           this.child = new AALineSegment(3, 4)
@@ -148,12 +190,20 @@ describe('AALineSegment', function () {
           this.child.parent = null
         })
 
+        it('removes parent from child', function () {
+          expect(this.child.parent).to.eq(null)
+        })
+
+        it('removes child from parent children', function () {
+          expect(this.parent._children).to.not.contain(this.child)
+        })
+
         it('restores global A', function () {
-          expect(this.child.a).to.eq(3 + 2) // a + position
+          expect(this.child.a).to.eq(5)
         })
 
         it('restores global B', function () {
-          expect(this.child.b).to.eq(4 + 2) // b + position
+          expect(this.child.b).to.eq(6)
         })
 
         it('restores global position', function () {
@@ -162,6 +212,48 @@ describe('AALineSegment', function () {
 
         it('restores flip state', function () {
           expect(this.child._globalFlipped).to.eq(false)
+        })
+      })
+
+      context('when child (flipped) has a parent (not flipped)', function () {
+        before(function () {
+          // -9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+          //  ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+          //                                P  A──B               (parent)
+          //                          A──B        P               (flipped child under parent)
+          //
+          //                       A──B        P                  (flipped child without parent)
+          this.parent = new AALineSegment(1, 2)
+          this.parent.position = 1
+          this.child = new AALineSegment(3, 4)
+          this.child.position = 2
+          this.child.flip(true)
+          this.child.parent = this.parent
+          this.child.parent = null
+        })
+
+        it('removes parent from child', function () {
+          expect(this.child.parent).to.eq(null)
+        })
+
+        it('removes child from parent children', function () {
+          expect(this.parent._children).to.not.contain(this.child)
+        })
+
+        it.skip('restores global A', function () {
+          expect(this.child.a).to.eq(-2)
+        })
+
+        it.skip('restores global B', function () {
+          expect(this.child.b).to.eq(-1)
+        })
+
+        it.skip('restores global position', function () {
+          expect(this.child.position).to.eq(2)
+        })
+
+        it('keeps flip state', function () {
+          expect(this.child._globalFlipped).to.eq(true)
         })
       })
     })

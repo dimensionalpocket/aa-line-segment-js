@@ -13,7 +13,7 @@ describe('AALineSegment', function () {
 
     it('sets flip defaults', function () {
       expect(this.segment._localFlipped).to.eq(false)
-      expect(this.segment._worldFlipped).to.eq(false)
+      expect(this.segment._globalFlipped).to.eq(false)
     })
 
     it('sets a and b correctly', function () {

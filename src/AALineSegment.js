@@ -35,32 +35,32 @@ export class AALineSegment {
     this._localFlipped = false
 
     /**
-     * The value of A relative to the world.
+     * The global value of A, relative to the world.
      *
      * @type {number}
      */
-    this._worldA = this._localA
+    this._globalA = this._localA
 
     /**
-     * The value of B relative to the world.
+     * The global value of B, relative to the world.
      *
      * @type {number}
      */
-    this._worldB = this._localB
+    this._globalB = this._localB
 
     /**
-     * The segment position relative to the world.
+     * The global position, relative to the world.
      *
      * @type {number}
      */
-    this._worldPosition = 0
+    this._globalPosition = 0
 
     /**
-     * Flip state relative to the world.
+     * Global flip state, relative to the world.
      *
      * @type {boolean}
      */
-    this._worldFlipped = false
+    this._globalFlipped = false
 
     /**
      * The parent segment.
@@ -83,7 +83,7 @@ export class AALineSegment {
    * @returns {number}
    */
   get a () {
-    return this._worldA
+    return this._globalA
   }
 
   /**
@@ -92,7 +92,7 @@ export class AALineSegment {
    * @returns {number}
    */
   get b () {
-    return this._worldB
+    return this._globalB
   }
 
   /**
@@ -109,10 +109,10 @@ export class AALineSegment {
 
     this._localA = value
 
-    if (this._worldFlipped) {
-      this._worldB -= delta
+    if (this._globalFlipped) {
+      this._globalB -= delta
     } else {
-      this._worldA += delta
+      this._globalA += delta
     }
   }
 
@@ -130,20 +130,20 @@ export class AALineSegment {
 
     this._localB = value
 
-    if (this._worldFlipped) {
-      this._worldA -= delta
+    if (this._globalFlipped) {
+      this._globalA -= delta
     } else {
-      this._worldB += delta
+      this._globalB += delta
     }
   }
 
   /**
-   * Returns world position.
+   * Returns global position.
    *
    * @returns {number}
    */
   get position () {
-    return this._worldPosition
+    return this._globalPosition
   }
 
   /**
@@ -187,16 +187,16 @@ export class AALineSegment {
       this._parent = null
 
       // Removing the parent resets flip state.
-      if (this._worldFlipped !== this._localFlipped) {
-        this._worldFlipped = this._localFlipped
-        if (this._worldFlipped) {
+      if (this._globalFlipped !== this._localFlipped) {
+        this._globalFlipped = this._localFlipped
+        if (this._globalFlipped) {
           this._onFlip()
         } else {
           this._onUnflip()
         }
       }
 
-      positionDelta = -oldParent._worldPosition
+      positionDelta = -oldParent._globalPosition
       this.updateGlobalPosition(positionDelta)
 
       return
@@ -214,10 +214,10 @@ export class AALineSegment {
     positionDelta = newParent._localPosition
 
     // Flip or unflip segment if orientation changed due to the new parent.
-    if (newParent._worldFlipped !== this._worldFlipped) {
-      this._worldFlipped = !this._worldFlipped
+    if (newParent._globalFlipped !== this._globalFlipped) {
+      this._globalFlipped = !this._globalFlipped
       positionDelta += this._localPosition
-      if (this._worldFlipped) {
+      if (this._globalFlipped) {
         positionDelta *= -1 // translate to the left
         this._onFlip()
       } else {
@@ -251,9 +251,9 @@ export class AALineSegment {
     this._localFlipped = newState
 
     // If local mod changed, global mod will always toggle
-    this._worldFlipped = !this._worldFlipped
+    this._globalFlipped = !this._globalFlipped
 
-    if (this._worldFlipped) {
+    if (this._globalFlipped) {
       this._onFlip()
     } else {
       this._onUnflip()
@@ -268,10 +268,10 @@ export class AALineSegment {
    */
   _onFlip () {
     // Flips A and B globals around its position
-    var worldPosition = this._worldPosition
+    var globalPosition = this._globalPosition
 
-    this._worldA = worldPosition - this._localB
-    this._worldB = worldPosition - this._localA
+    this._globalA = globalPosition - this._localB
+    this._globalB = globalPosition - this._localA
 
     this._flipChildren()
   }
@@ -284,10 +284,10 @@ export class AALineSegment {
    */
   _onUnflip () {
     // Restores A and B globals
-    var position = this._worldPosition
+    var position = this._globalPosition
 
-    this._worldA = position + this._localA
-    this._worldB = position + this._localB
+    this._globalA = position + this._localA
+    this._globalB = position + this._localB
 
     this._flipChildren()
   }
@@ -307,7 +307,7 @@ export class AALineSegment {
 
     // Toggles flipping on all children
     for (child of children) {
-      child._worldFlipped = !child._worldFlipped
+      child._globalFlipped = !child._globalFlipped
     }
 
     // Determines the new positions caused by flipping.
@@ -316,15 +316,15 @@ export class AALineSegment {
     for (child of children) {
       parent = child._parent
       // @ts-ignore - parent is never null in this case
-      parentPosition = parent._worldPosition
+      parentPosition = parent._globalPosition
 
       // We calculate the position difference between the parent and child
       // then multiply by 2 as we have to send the child "across" the position
       // @ts-ignore - parent is never null in this case
-      if (parent._worldFlipped) {
-        positionDelta = -(child._worldPosition - parentPosition) * 2
+      if (parent._globalFlipped) {
+        positionDelta = -(child._globalPosition - parentPosition) * 2
       } else {
-        positionDelta = (child._worldPosition - parentPosition) * 2
+        positionDelta = (child._globalPosition - parentPosition) * 2
       }
 
       // console.log('Moving child by', positionDelta, child)
@@ -340,21 +340,21 @@ export class AALineSegment {
 
     var parent = this._parent
 
-    if (parent?._worldFlipped && !this._worldFlipped) {
+    if (parent?._globalFlipped && !this._globalFlipped) {
       // A flipped parent changes the orientation of a unflipped segment.
-      this._worldPosition -= delta
-      this._worldA -= delta
-      this._worldB -= delta
+      this._globalPosition -= delta
+      this._globalA -= delta
+      this._globalB -= delta
     } else {
-      this._worldPosition += delta
-      this._worldA += delta
-      this._worldB += delta
+      this._globalPosition += delta
+      this._globalA += delta
+      this._globalB += delta
     }
 
-    // if (this._worldFlipped) {
+    // if (this._globalFlipped) {
     // } else {
-    //   this._worldA += delta
-    //   this._worldB += delta
+    //   this._globalA += delta
+    //   this._globalB += delta
     // }
 
     /** @type {Array<AALineSegment>} */

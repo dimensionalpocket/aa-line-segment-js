@@ -82,7 +82,7 @@ var child = new AALineSegment(1, 2)
                             P  A──B
                             ↑
                             Child without parent, position 0
-                            
+
 */
 
 child.a // <= 1
@@ -157,6 +157,33 @@ child.flip(true)
 
 child.a // <= 3
 child.b // <= 4
+```
+
+### Collision Detection
+
+Two segments collide if they touch or intersect with each other.
+
+```js
+var s1 = new AALineSegment(-1, 0)
+var s2 = new AALineSegment(0, 1)
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                         A──B               (s1)
+                            A──B            (s2)
+*/
+
+s1.collidesWith(s2) // <= true
+
+s2.position = 1
+/* 
+-9 -8 -7 -6 -5 -4 -3 -2 -1  0  1  2  3  4  5  6  7  8  9
+ ├──┬──┬──┬──┬──┬──┬──┬──┬──┼──┬──┬──┬──┬──┬──┬──┬──┬──┤
+                         A──B               (s1)
+                               A──B         (s2, repositioned)
+*/
+
+s1.collidesWith(s2) // <= false
 ```
 
 ## License

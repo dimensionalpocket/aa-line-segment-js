@@ -1,0 +1,6 @@
+{
+  "extends": [
+    "github>dimensionalpocket/development-js//renovate/default",
+    "github>dimensionalpocket/development-js//renovate/automerge"
+  ]
+}

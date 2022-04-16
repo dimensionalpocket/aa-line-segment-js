@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "typeRoots": ["./node_modules/@types"],
+    "target": "ES5",
+    "lib": [
+      "dom",
+      "es5",
+      "es2015.collection",
+      "es2015.iterable"
+    ],
+    "downlevelIteration": true
+  },
+  "include": [
+    "src/**/*.js",
+    "test/**/*.js"
+  ]
+}

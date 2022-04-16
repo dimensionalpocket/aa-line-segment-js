@@ -232,6 +232,14 @@ export class AALineSegment {
   }
 
   /**
+   * @param {AALineSegment} anotherSegment
+   * @returns {boolean} `true` if this segment touches or intersects with another segment.
+   */
+  collidesWith (anotherSegment) {
+    return this._globalB >= anotherSegment._globalA && this._globalA <= anotherSegment._globalB
+  }
+
+  /**
    * Recalculates global A based on the global position.
    *
    * @private

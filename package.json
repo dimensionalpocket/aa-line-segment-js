@@ -1,6 +1,6 @@
 {
   "name": "@dimensionalpocket/aa-line-segment",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Axis-Aligned Line Segment library for Node apps",
   "type": "module",
   "main": "index.js",

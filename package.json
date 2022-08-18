@@ -6,8 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run lint && NODE_ENV=test c8 mocha",
-    "lint": "standardx --fix --verbose",
-    "release": "release-it --config ./node_modules/@dimensionalpocket/release/config/default.js"
+    "lint": "standardx --fix --verbose"
   },
   "repository": {
     "type": "git",
@@ -24,8 +23,7 @@
   },
   "homepage": "https://github.com/dimensionalpocket/aa-line-segment-js#readme",
   "devDependencies": {
-    "@dimensionalpocket/development": "github:dimensionalpocket/development-js#0.6.1",
-    "@dimensionalpocket/release": "github:dimensionalpocket/release-js#0.2.4"
+    "@dimensionalpocket/development": "github:dimensionalpocket/development-js#1.0.0"
   },
   "babel": {
     "extends": "./node_modules/@dimensionalpocket/development/babel"

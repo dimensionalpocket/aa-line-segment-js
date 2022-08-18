@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/dimensionalpocket/aa-line-segment-js#readme",
   "devDependencies": {
-    "@dimensionalpocket/development": "github:dimensionalpocket/development-js#1.0.0"
+    "@dimensionalpocket/development": "github:dimensionalpocket/development-js#v1.0.0"
   },
   "babel": {
     "extends": "./node_modules/@dimensionalpocket/development/babel"
